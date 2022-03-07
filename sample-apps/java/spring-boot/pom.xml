@@ -33,29 +33,16 @@
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-security</artifactId>
     </dependency>
-    <!-- <dependency>
-      <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-starter-thymeleaf</artifactId>
-    </dependency> -->
-    <!-- <dependency>
-      <groupId>org.flywaydb</groupId>
-      <artifactId>flyway-core</artifactId>
-    </dependency> -->
-    <!-- <dependency>
-      <groupId>org.thymeleaf.extras</groupId>
-      <artifactId>thymeleaf-extras-springsecurity5</artifactId>
-    </dependency> -->
-
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-actuator</artifactId>
     </dependency>
+     <!-- Database sependencies -->
     <!-- <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-data-jpa</artifactId>
-    </dependency> -->
-    <!--  Database sependencies-->
-    <!-- <dependency>
+    </dependency>
+    <dependency>
       <groupId>com.h2database</groupId>
       <artifactId>h2</artifactId>
       <scope>runtime</scope>
@@ -64,15 +51,11 @@
       <groupId>org.postgresql</groupId>
       <artifactId>postgresql</artifactId>
       <scope>runtime</scope>
-    </dependency> -->
-
-    <!--  Spring DevTools-->
-    <dependency>
-      <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-devtools</artifactId>
-      <scope>runtime</scope>
-      <optional>true</optional>
     </dependency>
+    <dependency>
+      <groupId>org.flywaydb</groupId>
+      <artifactId>flyway-core</artifactId>
+    </dependency> -->
 
     <!-- Test dependencies -->
     <dependency>
@@ -110,7 +93,7 @@
   </dependencies>
 
 <!--  Jib Maven plugin-->
-  <build>
+  <!-- <build>
     <plugins>
       <plugin>
         <groupId>com.google.cloud.tools</groupId>
@@ -127,18 +110,13 @@
           </layers>
         </configuration>
       </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-checkstyle-plugin</artifactId>
-        <version>3.1.2</version>
-      </plugin>      
     </plugins>
-  </build>
+  </build> -->
 
   <!--  Spring profiles-->
-  <profiles>
+  <!-- <profiles>
       <profile>
-      <id>sync</id>
+      <id>dev</id>
       <dependencies>
           <dependency>
           <groupId>org.springframework.boot</groupId>
@@ -146,7 +124,7 @@
           </dependency>
       </dependencies>
       </profile>
-  </profiles>
+  </profiles> -->
 
   <!-- Dependency management -->
   <dependencyManagement>

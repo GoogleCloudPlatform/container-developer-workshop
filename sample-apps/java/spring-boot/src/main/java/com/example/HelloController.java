@@ -12,7 +12,7 @@ public class HelloController {
     @Value("${target:local}")
     String target;
 
-    @GetMapping("/hello") 
+    @GetMapping("/") 
     public String hello()
     {
         return String.format("Hello from your %s environment!", target);
