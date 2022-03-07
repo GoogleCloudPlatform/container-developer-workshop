@@ -2,12 +2,6 @@
 
 ## Create a Spring Boot Application
 
-Get the source code
-```shell
-...
-
-```
-
 Validate that you have Java 17 and Maven installed
 ```shell
 java -version
