@@ -2,7 +2,7 @@
 
 In previous labs you were introduced to different build types. Now, let's dive into the Inner Loop Application Development process of a Spring Boot application in Google Cloud.
 
-## Scope 
+## Key Points 
 In this lab you will learn how to:
 * Generate and configure build and deployment manifests for K8s using Skaffold and Jib 
 * Build a simple CRUD REST service with a local Postgres backend
@@ -24,6 +24,9 @@ IDE
 Cluster
 * GKE cluster configured to be used by Cloud Code - [setup instructions](./docs/GKEClusterSetup.md)
 * Local K8s cluster such as minikube
+
+Artifact Registry repo
+* [Repository setup instructions](./ArtifactRegistrySetup.md)
 
 ## Start from a starter Spring Boot application
 
@@ -126,7 +129,7 @@ build:
 This will be the base of the app going forward.
 
 In your IDE, click F1 and execute `Cloud Code: Run on Kubernetes` or click the Cloud Code extension link and select the same option
-* Choose context - point to the GKE cluster called `devcluster`
+* Choose context - point to the GKE cluster called `lab-cluster`
 * Choose Container Registry - select Brows Artifact Registry - select the `demo-app` folder
 * Within the Artifact Registry demo-app folder, use the default `.` as the image location
 
@@ -674,6 +677,105 @@ To validate that the test method is correct, we can simply run a `mvn verify` co
 
 Alternatively, you can open `Test` view (test glass icon), right click on QuotesRepositoryTest and `Run Tests`. You should observe 5 tests executing correctly.
 
-### This concludes the mandatory part of the lab - please run the Optional component, where the app will be connected to a CLoudSQL for Postgres managed instance
+### This concludes the mandatory part of the lab - please run the Optional part of the lab, where the app will be connected to a CloudSQL for Postgres managed instance
 
-[CloudSQL Setup Instructions](./docs/CloudSQLSetup.md)
+------
+
+## [Optional] Connect the app to a Google CloudSQL instance (CloudSQL for Postgres)
+
+The starter app has evolved throughout the course of the lab, with the addition of a the `Quote` CRUD service, connected to a Postgres backend.
+
+`Quick reminders` 
+* up to this point, the backend has been implemented by the H2 Java Database, running in-memory. Testing has been performed using a containerized Postgres database, abstracted through the usagge of Testcontainers.
+* at application start, you could observe, when selecting the `Kubernetes: Run/Debug Detailed` option in the dropdown located in the `Output` tab of the `Cloud Code - Kubernetes` view, the database being used, an in-memory database:
+  ```yaml
+  [demo-app]... --- [  restartedMain] o.f.c.i.database.base.BaseDatabaseType   : Database: jdbc:h2:mem:faa65c63-110b-4723-95d8-bbd3fb2642cb (H2 1.4)
+  ```
+* the datasource configuration has already been configured using externalized variables in the `src/main/resources/application.yaml` file. This configuration is being activated by the `cloud-dev` profile set in the deployment manifest `deployment.yaml`:
+  ```yaml
+  spring:
+    config:
+      activate:
+        on-profile: cloud-dev
+    datasource:
+      url: 'jdbc:postgresql://${DB_HOST:127.0.0.1}/${DB_DATABASE:quote_db}'
+      username: '${DB_USER:user}'
+      password: '${DB_PASS:password}'
+  ...    
+  ```    
+
+At this time, the app can be enhanced and connected directly to a `CloudSQL for Postgres managed instance in the Google Cloud`.
+
+To set up a CloudSQL for Postgres database instance, please follow the instructions in [CloudSQL Setup Instructions](./docs/CloudSQLSetup.md).
+
+The following additions to the `deployment.yaml` file allow the application to connect to the CloudSQL instances.
+Notes:
+* TARGET - configures the variable to indicate the environment where the app is executed
+* SPRING_PROFILES_ACTIVE - shows the active Spring profile, which will be configured to `cloud-dev`
+* DB_HOST - the private IP for the database, which has been noted when the database instance has been created or by clicking `SQL` in the Navigation Menu of the Google Cloud Console - please change the value !
+* DB_USER and DB_PASS - as set in the CloudSQL instance configuration, stored as a Secret in GCP
+
+```yaml
+        env:
+          - name: PORT
+            value: "8080"
+          - name: TARGET
+            value: "Local Dev - CloudSQL Database - K8s Cluster"
+          # set the profile to use
+          - name: SPRING_PROFILES_ACTIVE
+            value: cloud-dev
+          - name: DB_HOST
+            value: PRIVATE-IP-OF-DATABASE  # example "172.24.0.3" 
+          - name: DB_PORT
+            value: "5432"  
+          - name: DB_USER
+            valueFrom:
+              secretKeyRef:
+                name: gke-cloud-sql-secrets
+                key: username
+          - name: DB_PASS
+            valueFrom:
+              secretKeyRef:
+                name: gke-cloud-sql-secrets
+                key: password
+          - name: DB_NAME
+            valueFrom:
+              secretKeyRef:
+                name: gke-cloud-sql-secrets
+                key: database       
+```                
+
+Save the file and start the app in the GKE cluster from `Cloud Code: Run on Kubernetees
+
+Observe, in the `Kubernetes: Run/Debug - Detailed` dropdown that the app connects to the previously configured CloudSQL instance at <private IP of database>
+```
+...
+[demo-app]... --- [  restartedMain] o.s.b.a.h2.H2ConsoleAutoConfiguration    : H2 console available at '/h2-console'. Database available at 'jdbc:postgresql://172.24.0.3/quote_db'
+...
+```
+
+Test the app and observe that the root endpoint indicates in its output the environment change: `Local Dev - CloudSQL Database - K8s Cluster environment!`
+```
+Let's use either cURL or HTTPie for testing the app, from a Terminal window:
+```shell
+curl -v 127.0.0.1:8080
+  or
+http :8080
+
+# Output: Hello from your Local Dev - CloudSQL Database - K8s Cluster environment!
+
+curl -v 127.0.0.1:8080/random-quote
+  or
+http :8080/random-quote
+
+# Output: 
+{
+    "author": "Marcus Tullius Cicero",
+    "id": 2,
+    "quote": "While there's life, there's hope"
+}
+```
+
+Stop the application running in GKE!
+
+## Congratulations - you have successfully completed the lab !

@@ -6,7 +6,7 @@ export PROJECT_ID="{PROJECT_ID}"
 
 # Dev cluster
 echo "creating devcluster..."
-gcloud beta container --project "$PROJECT_ID" clusters create-auto "devcluster" \
+gcloud beta container --project "$PROJECT_ID" clusters create-auto "lab-cluster" \
 --region "us-central1" --release-channel "regular" --network "projects/$PROJECT_ID/global/networks/default" \
 --subnetwork "projects/$PROJECT_ID/regions/us-central1/subnetworks/default" \
 --cluster-ipv4-cidr "/17" --services-ipv4-cidr "/22" --async\
@@ -14,7 +14,7 @@ gcloud beta container --project "$PROJECT_ID" clusters create-auto "devcluster" 
 
 ## Connect to the cluster using the gcloud CLI
 ```shell
-gcloud container clusters get-credentials devcluster --region us-central1 --project {PROJECT_ID}
+gcloud container clusters get-credentials lab-cluster --region us-central1 --project {PROJECT_ID}
 
 # ex.:
 # gcloud container clusters get-credentials devcluster --region us-central1 --project dan-workshop-project-332213

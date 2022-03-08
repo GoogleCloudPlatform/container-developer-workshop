@@ -52,12 +52,6 @@ gcloud beta sql instances create $DB_INSTANCE \
 
 This takes several minutes. 
 
-* Patch the instance to require SSL
-
-```
-gcloud sql instances patch $DB_INSTANCE --require-ssl
-```
-
 ## Create a database
 
 * Create a new database in the above instance
