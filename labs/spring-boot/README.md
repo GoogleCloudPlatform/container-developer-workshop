@@ -49,7 +49,7 @@ Notes on the source code:
 
 ## Generate and configure build and deployment manifests for K8s using Skaffold and Jib
 
-Open the `pom.xml` and enable the Spring Boot DevTools, a development setting which supports the Hot Redeploy in future stages. A `dev profile` is being used, as this setting will not be used in a Production environment.
+Open the `pom.xml` and enable the Spring Boot DevTools, a development setting which supports the Hot Deploy in future stages. A `dev profile` is being used, as this setting will not be used in a Production environment.
 ```xml
   <!--  Spring profiles-->
   <profiles>
@@ -67,12 +67,15 @@ Open the `pom.xml` and enable the Spring Boot DevTools, a development setting wh
 
 Add the Jib plugin in the `<build/plugins>` section, to enable building with Jib
 ```xml
+  <build>
     <plugins>
       <plugin>
         <groupId>com.google.cloud.tools</groupId>
         <artifactId>jib-maven-plugin</artifactId>
         <version>3.2.0</version>
-      </plugin>
+      </plugin>  
+    </plugins>
+  </build>
 ```
 
 In your IDE of choice, open a Terminal window. The next steps involve:
@@ -595,18 +598,18 @@ Let's use either cURL or HTTPie for testing the app, from a Terminal window:
 ```shell
 # run repeatedly a GET against the random-quote endpoint
 # observe repeated call returning different quotes
-curl 127.0.0.1:8080/random-quote
+curl -v 127.0.0.1:8080/random-quote
   or
 http :8080/random-quote
 
 # create a new quote, with id=6
 # observe the request being echo'ed back
-curl  -H 'Content-Type: application/json' -d '{"id":"6","author":"Henry Thoreau","quote":"Go confidently in the direction of your dreams! Live the life you’ve imagined"}' -X POST 127.0.0.1:8080/quotes
+curl -v -H 'Content-Type: application/json' -d '{"id":"6","author":"Henry David Thoreau","quote":"Go confidently in the direction of your dreams! Live the life you’ve imagined"}' -X POST 127.0.0.1:8080/quotes
   or 
-http PUT :8080/quotes/6 author="Henry Thoreau" quote="Go confidently in the direction of your dreams! Live the life you’ve imagined" id="6"
+http PUT :8080/quotes/6 author="Henry David Thoreau" quote="Go confidently in the direction of your dreams! Live the life you’ve imagined" id="6"
 
 # delete a quote
-curl -X DELETE 127.0.0.1:8080/quotes/6
+curl -v -X DELETE 127.0.0.1:8080/quotes/6
   or 
 http DELETE :8080/quotes/6
 ```
@@ -668,6 +671,8 @@ Let's correct this by adding a test method to the `QuotesRepositoryTest` test cl
   ```
 
 To validate that the test method is correct, we can simply run a `mvn verify` command from a terminal window and observe all our tests passing.
+
+Alternatively, you can open `Test` view (test glass icon), right click on QuotesRepositoryTest and `Run Tests`. You should observe 5 tests executing correctly.
 
 ### This concludes the mandatory part of the lab - please run the Optional component, where the app will be connected to a CLoudSQL for Postgres managed instance
 
