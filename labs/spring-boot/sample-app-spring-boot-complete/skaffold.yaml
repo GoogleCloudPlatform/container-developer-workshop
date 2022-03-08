@@ -1,0 +1,22 @@
+apiVersion: skaffold/v2beta27
+kind: Config
+metadata:
+  name: spring-boot
+build:
+  artifacts:
+  - image: demo-app
+    jib:
+      project: com.example:demo-app
+      args:
+      - -Dmaven.test.skip=true
+      - -Pdev
+    sync:
+      auto: true
+deploy:
+  kubectl:
+    manifests:
+    - deployment.yaml
+portForward:
+- resourceType: service
+  resourceName: demo-app
+  port: 8080
