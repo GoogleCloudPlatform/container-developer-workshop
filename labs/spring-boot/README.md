@@ -48,7 +48,7 @@ Notes on the source code:
 * Source code is provisioned in the `src` folder and the application starts in the DemoApplication Java class
 * A starter Rest controller has been created for the `/` endpoint in the `src/main/java/com/example/HelloController` Java class. The controllwer displays a simple greeting, indicating the <environment> where it is running
 * This start Spring Boot app has no container specific code 
-* The code can be built using using `mvn` or `gradle`. In this specific example, Maven will be used. Locate `pom.xml` file in the project root and observe that it is configured to use Java 17, Boot 2.6.x and Spring Cloud 2021.x
+* The code can be built using using `mvn` or `gradle`. In this specific example, Maven will be used. Locate `pom.xml` file in the project root and observe that it is configured to use Java 11, Boot 2.6.x and Spring Cloud 2021.x
 
 ## Generate and configure build and deployment manifests for K8s using Skaffold and Jib
 
@@ -457,7 +457,7 @@ Add the testcontainers version under the `<properties>` section:
 
 # Section will look like
   <properties>
-    <java.version>17</java.version>
+    <java.version>1</java.version>
 	<spring-cloud.version>2021.0.1</spring-cloud.version>
     <testcontainers.version>1.16.3</testcontainers.version>
   </properties>

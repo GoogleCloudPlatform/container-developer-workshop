@@ -2,7 +2,7 @@
 
 ## Create a Spring Boot Application
 
-Validate that you have Java 17 and Maven installed
+Validate that you have Java 11 and Maven installed
 ```shell
 java -version
 

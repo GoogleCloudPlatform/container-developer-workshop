@@ -10,7 +10,7 @@ git clone https://github.com/ddobrin/container-developer-workshop.git
 cd labs/spring-boot/sample-app-spring-boot-complete
 ```
 
-Validate that you have Java 17 and Maven installed
+Validate that you have Java 11 and Maven installed
 ```shell
 java -version
 
