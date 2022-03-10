@@ -34,27 +34,30 @@ spec:
         env:
           - name: PORT
             value: "8080"
-          - name: TARGET
-            value: "Local Dev - CloudSQL Database - K8s Cluster"
-          # set the profile to use
-          - name: SPRING_PROFILES_ACTIVE
-            value: cloud-dev
-          - name: DB_HOST
-            value: "172.24.0.3"        
-          - name: DB_PORT
-            value: "5432"  
-          - name: DB_USER
-            valueFrom:
-              secretKeyRef:
-                name: gke-cloud-sql-secrets
-                key: username
-          - name: DB_PASS
-            valueFrom:
-              secretKeyRef:
-                name: gke-cloud-sql-secrets
-                key: password
-          - name: DB_NAME
-            valueFrom:
-              secretKeyRef:
-                name: gke-cloud-sql-secrets
-                key: database       
+          
+          # Disabled if not using the CloudSQL Database
+
+          # - name: TARGET
+          #   value: "Local Dev - CloudSQL Database - K8s Cluster"
+          # # set the profile to use
+          # - name: SPRING_PROFILES_ACTIVE
+          #   value: cloud-dev
+          # - name: DB_HOST
+          #   value: "172.24.0.3"        
+          # - name: DB_PORT
+          #   value: "5432"  
+          # - name: DB_USER
+          #   valueFrom:
+          #     secretKeyRef:
+          #       name: gke-cloud-sql-secrets
+          #       key: username
+          # - name: DB_PASS
+          #   valueFrom:
+          #     secretKeyRef:
+          #       name: gke-cloud-sql-secrets
+          #       key: password
+          # - name: DB_NAME
+          #   valueFrom:
+          #     secretKeyRef:
+          #       name: gke-cloud-sql-secrets
+          #       key: database       
