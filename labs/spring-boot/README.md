@@ -57,7 +57,7 @@ Open the `pom.xml` and enable the Spring Boot DevTools, a development setting wh
   <!--  Spring profiles-->
   <profiles>
       <profile>
-      <id>dev</id>
+      <id>sync</id>
       <dependencies>
           <dependency>
           <groupId>org.springframework.boot</groupId>
@@ -120,7 +120,7 @@ build:
       project: com.example:demo-app
       args:
       - -Dmaven.test.skip=true
-      - -Pdev
+      - -Psync
     sync:
       auto: true
 ```

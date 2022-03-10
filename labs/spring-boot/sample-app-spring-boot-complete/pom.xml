@@ -127,7 +127,7 @@
   <!--  Spring profiles-->
   <profiles>
       <profile>
-      <id>dev</id>
+      <id>sync</id>
       <dependencies>
           <dependency>
           <groupId>org.springframework.boot</groupId>
