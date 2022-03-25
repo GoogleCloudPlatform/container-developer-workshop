@@ -21,11 +21,13 @@ gcloud services enable \
   sourcerepo.googleapis.com \
   cloudbuild.googleapis.com \
   containerregistry.googleapis.com \
-  servicenetworking.googleapis.com
+  servicenetworking.googleapis.com \
+  sqladmin.googleapis.com
 
 ## Create GKE Cluster
-gcloud container clusters create mycluster --zone=us-central1-b
-
+#gcloud container clusters create mycluster --zone=us-central1-b
+gcloud beta container --project "$PROJECT_ID" clusters create-auto "quote-cluster" \
+--region "us-central1"
 
 
 ## Configure Private VPC
@@ -55,7 +57,7 @@ gcloud beta sql instances create $DB_INSTANCE_NAME \
     --region=$REGION \
     --root-password=${DB_INSTANCE_PASSWORD}
 
-gcloud sql databases create ${DB_DATABASE} --instance=${DB_INSTANCE_NAME}
+gcloud sql databases create ${DB_NAME} --instance=${DB_INSTANCE_NAME}
 
 gcloud sql users create ${DB_USER} \
     --password=$DB_PASSWORD \
@@ -69,12 +71,12 @@ export DB_INSTANCE_IP=$(gcloud sql instances describe $DB_INSTANCE_NAME \
 
 
 ## Connect to Private VPC
-gcloud iam service-accounts create gke-mytest-service-account \
-  --display-name="GKE Mytest Service Account"
+gcloud iam service-accounts create gke-quotedb-service-account \
+  --display-name="GKE QuoteDB Service Account"
 
 
 gcloud projects add-iam-policy-binding $PROJECT_ID \
-  --member="serviceAccount:gke-mytest-service-account@$PROJECT_ID.iam.gserviceaccount.com" \
+  --member="serviceAccount:gke-quotedb-service-account@$PROJECT_ID.iam.gserviceaccount.com" \
   --role="roles/cloudsql.client"
 
 
@@ -89,15 +91,16 @@ EOF
 gcloud iam service-accounts add-iam-policy-binding \
   --role="roles/iam.workloadIdentityUser" \
   --member="serviceAccount:$PROJECT_ID.svc.id.goog[default/ksa-cloud-sql]" \
-  gke-mytest-service-account@$PROJECT_ID.iam.gserviceaccount.com
+  gke-quotedb-service-account@$PROJECT_ID.iam.gserviceaccount.com
 
 
 kubectl annotate serviceaccount \
   ksa-cloud-sql  \
-  iam.gke.io/gcp-service-account=gke-mytest-service-account@$PROJECT_ID.iam.gserviceaccount.com
+  iam.gke.io/gcp-service-account=gke-quotedb-service-account@$PROJECT_ID.iam.gserviceaccount.com
 
 
 kubectl create secret generic gke-cloud-sql-secrets \
   --from-literal=database=$DB_NAME \
   --from-literal=username=$DB_USER \
-  --from-literal=password=$DB_PASS
+  --from-literal=password=$DB_PASSWORD
+  
