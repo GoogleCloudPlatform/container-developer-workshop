@@ -1,178 +1,332 @@
-# Containerized Java Development with Spring Boot & Jib on GKE
 
-In previous labs you were introduced to different build types. Now, let's dive into the Inner Loop Application Development process of a Spring Boot application in Google Cloud.
+# InnerLoop Development with Java - SpringBoot
 
-## Key Points 
-In this lab you will learn how to:
-* Generate and configure build and deployment manifests for K8s using Skaffold and Jib 
-* Build a simple CRUD REST service with a local Postgres backend
-* Add unit tests for the app, leveraging Testcontaines
-* Run/Debug the app in a GKE cluster
-* Observe an error in the app, set breakpoints, debug and fix the app in a GKE cluster
-* Observe the hot redeploy in action for the app fixes
-* Check that unit tests didn't cover the problem in the app; add the missing unit test - lesson learned
+# Overview
 
-Advanced Section - optional:
-* Connect the app to a Google CloudSQL instance (CloudSQL for Postgres)
-* Run and test the app 
+This lab demonstrates features and capabilities designed to streamline the development workflow for software engineers tasked with developing Java applications in a containerized environment. Typical container development requires the user to understand details of containers and the container build process. Additionally, developers typically have to break their flow, moving out of their IDE to test and debug their applications in remote environments. With the tools and technologies mentioned in this tutorial, developers can work effectively with containerized applications without leaving their IDE. 
 
-## Prequisites
-IDE
-* A cloud editor with Cloud Code such as Cloud Shell Editor or 
-* VS Code or IntelliJ with Cloud Code installed
 
-Cluster
-* GKE cluster configured to be used by Cloud Code - [setup instructions](./docs/GKEClusterSetup.md)
-* Local K8s cluster such as minikube
+## What you will learn
 
-Artifact Registry repo
-* [Repository setup instructions](./ArtifactRegistrySetup.md)
+In this lab you will learn methods for developing with containers in GCP including: 
+* Creating a new Java starter application
+* Configuring the app for container development
+* Creating a simple CRUD Rest Service
+* Deploying to GKE
+* Utilizing breakpoint / logs
+* Hot deploying changes back to GKE
 
-## Start from a starter Spring Boot application
 
-Clone the starter app code from Github
-```
-# Note: subject to change!
-git clone https://github.com/ddobrin/container-developer-workshop.git
+# Before you begin
 
-# Note: subject to change!
-cd sample-apps/java/spring-boot
-```
+For this reference guide, you need a Google Cloud [project](https://cloud.google.com/resource-manager/docs/cloud-platform-resource-hierarchy#projects). You can create a new one, or select a project you already created:
 
-## Explore the starter app codebase
 
-* On your local machine, open a `VS Cod`e workspace, for example, by executing `code .`
-* In Cloudshell, open the Cloudshell Editor; then, in the `Explorer` view, navigate to the `sample-apps/java/spring-boot` folder, right-click and select `Open as Workspace`
 
-Notes on the source code:
-* Source code is provisioned in the `src` folder and the application starts in the DemoApplication Java class
-* A starter Rest controller has been created for the `/` endpoint in the `src/main/java/com/example/HelloController` Java class. The controllwer displays a simple greeting, indicating the <environment> where it is running
-* This start Spring Boot app has no container specific code 
-* The code can be built using using `mvn` or `gradle`. In this specific example, Maven will be used. Locate `pom.xml` file in the project root and observe that it is configured to use Java 11, Boot 2.6.x and Spring Cloud 2021.x
+1. Select or create a Google Cloud project.
 
-## Generate and configure build and deployment manifests for K8s using Skaffold and Jib
+    [GO TO THE PROJECT SELECTOR PAGE](https://console.corp.google.com/projectselector2/home/dashboard)
 
-Open the `pom.xml` and enable the Spring Boot DevTools, a development setting which supports the Hot Deploy in future stages. A `dev profile` is being used, as this setting will not be used in a Production environment.
-```xml
-  <!--  Spring profiles-->
-  <profiles>
-      <profile>
-      <id>sync</id>
-      <dependencies>
-          <dependency>
-          <groupId>org.springframework.boot</groupId>
-          <artifactId>spring-boot-devtools</artifactId>
-          </dependency>
-      </dependencies>
-      </profile>
-  </profiles>
-```
+2. Enable billing for your project.
 
-Add the Jib plugin in the `<build/plugins>` section, to enable building with Jib
-```xml
-  <build>
-    <plugins>
-      <plugin>
-        <groupId>com.google.cloud.tools</groupId>
-        <artifactId>jib-maven-plugin</artifactId>
-        <version>3.2.0</version>
-      </plugin>  
-    </plugins>
-  </build>
-```
+    [ENABLE BILLING](https://support.google.com/cloud/answer/6293499#enable-billing)
 
-In your IDE of choice, open a Terminal window. The next steps involve:
-* initializing Skafold
-* generating K8s deployment manifests
-* setting Jib up to build images when invoked from Skaffold
 
-```shell
-skaffold init --generate-manifests --XXenableJibInit
-```
-* using the arrow keys, select the `Jib Maven Plugin (com.example:demo-app, pom.xm*l)` option
-* type in port 8080 to port-forward to
-* type `y` when prompted `Do you want to write this configuration, along with the generated k8s manifests, to skaffold.yaml?`
 
-Observe the output
-```
-Generated manifest deployment.yaml was written
-Configuration skaffold.yaml was written
-You can now run [skaffold build] to build the artifacts
-or [skaffold run] to build and deploy
-or [skaffold dev] to enter development mode, with auto-redeploy
-```
+# Utilizing Cloudshell Editor
 
-Open the newly generated `skaffold.yaml` 
-* Select the image name currently sent as `pom-xml-image`. 
-* Right click and choose `Change All Occurences`  
-* Type in the new name as `demo-app`
+This lab was designed and tested for use with Google Cloud Shell Editor. To access the editor: 
 
-Open now the `deployment.yaml` file and change all occurences of `pom-xml-image` to `demo-app`. The file contains 2 manifests
-* a K8s deployment that deploys a pod with the container image 
-* a K8s service that exposes the deployment
+1. access your google project at [https://console.cloud.google.com](https://console.cloud.google.com). 
+2. In the top right corner click on the cloud shell editor icon 
 
-To support the hot redeploy in Skaffold, when building with Jib, update the `skaffold.yaml` file in the `build` section, by adding configuration to skip unit tests when deploying to k8s, enabling sync and adding the `dev profile` to the build. The file should look as
-```yaml
-build:
-  artifacts:
-  - image: demo-app
-    jib:
-      project: com.example:demo-app
-      args:
-      - -Dmaven.test.skip=true
-      - -Psync
-    sync:
-      auto: true
-```
+   ![alt_text](images/image4.png "image_tooltip")
 
-## Validate the configuration by quickly running a build and deploy sequence against the GKE cluster
-This will be the base of the app going forward.
+3. A new pane will open in the bottom of your window
+4. Click on the Open Editor button
 
-In your IDE, click F1 and execute `Cloud Code: Run on Kubernetes` or click the Cloud Code extension link and select the same option
-* Choose context - point to the GKE cluster called `lab-cluster`
-* Choose Container Registry - select Brows Artifact Registry - select the `demo-app` folder
-* Within the Artifact Registry demo-app folder, use the default `.` as the image location
+   ![alt_text](images/image1.png "image_tooltip")
 
-Skafoold will start to build the app and deploy it to K8s. In the `Cloud Code - Kubernetes` view, observe the `Status`, Build Containers`, `Deploy to Cluster` and `Portforward URLs` steps.
+5. The editor will open with an explorer on the right and editor in the central area
+6. A terminal pane should also be available in the bottom of the screen
+7. If the terminal is NOT open use the key combination of ctrl+` to open a new terminal window
 
-Click on `Portforwarded URLS` as the deployment is successul and observe the output:
-```
-Port forwarding service/demo-app in namespace default, remote port 8080 -> http://127.0.0.1:8080
-```
 
-Click on the link and observe the output:
-```
-Hello from your local environment!
-```
+# Preparing your environment
 
-You can also send a cUrl or HTTPie request for testing:
-```shell
-curl 127.0.0.1:8080
-   or 
-http :8080
-```
+1. Create environment variables to use throughout this tutorial:
 
-You have now a running web application deployed and running in your GKE cluster and are good to go for building out the CRUD application for the lab !!!
+    ```shell
+    export PROJECT_ID=$(gcloud config get-value project)
+    export PROJECT_NUMBER=$(gcloud projects describe $PROJECT_ID --format='value(projectNumber)')
+    ```
+2. In Cloud Shell, clone the project files and change into the directory
+    ```shell
+    git clone https://github.com/ddobrin/container-developer-workshop.git
+    
+    cd container-developer-workshop/labs/spring-boot
+    ```
+3. Provision the infrastructure used in this lab
+    ```shell
+    ./setup.sh
+    ```
 
-Stop the session using `SHIFT + F5` or select `Stop Debugging` from the menu or click the `Stop` button the Cloud Code - Kubernetes view.
+# Creating a new Java starter application
 
-## Build a simple CRUD REST service with a local Postgres backend
+In this section you’ll create a new Java Spring Boot application from scratch utilizing a sample application provided by spring.io
 
-To build a CRUD service within the starter app, the following areas need to be addressed:
-* develop the CRUD service code
-* add configuration for the backend database accessed by the service
-* update the dependencies in the Maven POM file
-* add containerized unit and integration tests for the backend leveraging Testcontainers
-#### Let's start writing some code ...
+## Clone the Sample Application
+1. Create a starter application
+    ```shell
+    curl  https://start.spring.io/starter.zip -d dependencies=web -d type=maven-project -d javaVersion=11 -d packageName=com.example.springboot -o sample-app.zip
+    ```
+2. Unzip the application
+`unzip sample-app.zip -d sample-app`
+3. Change into the sample-app directory and open the folder in the Cloud Shell IDE workspace
+    ```shell
+    cd sample-app && cloudshell workspace .
+    ```
 
-## Add the CRUD Service code 
-We'll develop a `Quote` service, which would allow us to work with quotes collected from famous people throughout history.
+## Add spring-boot-devtools & Jib
 
-The code for the Quote service will be developed in the `com.example` package.
+To enable the Spring Boot DevTools find and open the pom.xml from the explorer in your editor. Next paste the following code after the description line which reads &lt;description>Demo project for Spring Boot&lt;/description> 
 
-Start by creating an Entity class:  Quote
+1. Add spring-boot-devtools  in pom.xml
+
+    Open the pom.xml in the root of the project. Add the following configuration after the `Description` entry.
+
+    ```xml
+      <!--  Spring profiles-->
+      <profiles>
+          <profile>
+          <id>sync</id>
+          <dependencies>
+              <dependency>
+              <groupId>org.springframework.boot</groupId>
+              <artifactId>spring-boot-devtools</artifactId>
+              </dependency>
+          </dependencies>
+          </profile>
+      </profiles>
+    ```
+
+    Choose `Now` when prompted about build file change.
+2. Enable jib-maven-plugin in pom.xml
+
+    Jib is an open-source Java containerizer from Google that lets Java developers build containers using the Java tools they know. Jib is a fast and simple container image builder that handles all the steps of packaging your application into a container image. It does not require you to write a Dockerfile or have docker installed, and it is directly integrated into Maven and Gradle.
+
+
+    Scroll down in the pom.xml file and update the `Build `section to include the Jib plugin. The build section should match the following when completed. 
+
+    ```xml
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-maven-plugin</artifactId>
+          </plugin>
+          <!--  Jib Plugin-->
+          <plugin>
+            <groupId>com.google.cloud.tools</groupId>
+            <artifactId>jib-maven-plugin</artifactId>
+            <version>3.2.0</version>
+          </plugin>
+        </plugins>
+      </build>
+    ```
+
+    Choose `Now` when prompted about build file change.
+
+
+## Generate Manifests
+
+Skaffold provides integrated tools to simplify container development.  In this step you will initialize skaffold which will automatically create base kubernetes YAML files. Execute the command below to begin the process. 
+
+1. Execute the following command in the terminal
+    ```shell
+    skaffold init --generate-manifests --XXenableJibInit
+    ```
+2. When prompted:
+    * Use the arrows to move your cursor to **<code>Jib Maven Plugin</code></strong>
+    * Press the spacebar to select the option.
+    * Press enter to continue 
+3. Enter <strong>8080</strong> for the port
+4. Enter <strong>y</strong> to save the configuration
+
+Two files are added to the workspace viz, <code>skaffold.yaml</code>and <code>deployment.yaml</code>
+
+## Update app name
+
+The default values included in the configuration don’t currently match the name of your application. Update the files to reference your application name rather than the default values.
+
+1. Change entries in Skaffold config
+    * Open `skaffold.yaml`
+    * Select the image name currently set as `pom-xml-image`
+    * Right click and choose Change All Occurrences
+    * Type in the new name as `demo-app`
+2. Change entries in Kubernetes config
+    * Open `deployment.yaml` file 
+    * Select the image name currently set as` pom-xml-image`
+    * Right click and choose Change All Occurrences
+    * Type in the new name as `demo-app`
+
+
+## Enable hot sync
+
+To facilitate an optimized hot reload experience you’ll utilize the Sync feature provided by Jib. In this step you will configure Skaffold to utilize that feature in the build process. 
+
+
+
+1. Update skaffold config
+
+    In the skaffold.yaml file replace the entire build section of the file with the following specification. Do not alter other sections of the file. 
+
+    ```yaml
+    build:
+      artifacts:
+      - image: demo-app
+        jib:
+          project: com.example:demo
+          type: maven
+          args: 
+          - --no-transfer-progress
+          - -Psync
+          fromImage: gcr.io/distroless/java:debug
+        sync:
+          auto: true
+    ```
+
+## Add a default route
+
+Create a file called HelloController.java in <strong>/src/main/java/com/example/springboot/</strong>
+
+Paste the following contents in the file to create a default http route.
 ```java
-package com.example;
+package com.example.springboot;
+
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.beans.factory.annotation.Value;
+
+@RestController
+public class HelloController {
+
+    @Value("${target:local}")
+    String target;
+
+    @GetMapping("/") 
+    public String hello()
+    {
+        return String.format("Hello from your %s environment!", target);
+    }
+}
+```
+
+# Walking through the development process
+
+In this section you’ll walk through a few steps using the Cloud Code plugin to learn the basic processes and to validate the configuration and setup of your starter application. 
+
+Cloud Code integrates with skaffold to streamline your development process. When you deploy to GKE in the following steps, Cloud Code and Skaffold will automatically build your container image, push it to a Container Registry, and then deploy your application to GKE. This happens behind the scenes abstracting the details away from the developer flow. Cloud Code also enhances your development process by providing traditional debug and hotsync capabilities to container based development. 
+
+
+## Deploy to Kubernetes
+1. In the pane at the bottom of Cloud Shell Editor, select Cloud Code  ￼   
+
+   ![alt_text](images/image2.png "image_tooltip")
+
+2. In the panel that appears at the top, select Debug on Kubernetes. If prompted, select Yes to use the current Kubernetes context.
+
+   ![alt_text](images/image11.png "image_tooltip")
+
+3. The first time you run the command a  prompt will appear at the top of the screen asking if you want to you the current kubernetes context, select “Yes” to accept and use the current context. 
+
+   ![alt_text](images/image9.png "image_tooltip")
+
+4. Next a prompt will be displayed asking which container registry to use. Press enter to accept the default value provided
+
+   ![alt_text](images/image5.png "image_tooltip")
+
+
+5. A new tab will appear in your editor that contains the configurations for your build. Scroll to the bottom leaving all the defaults. Then Click the `Debug` button.
+
+   ![alt_text](images/image8.png "image_tooltip")
+
+
+6. Select the Output tab in the lower pane  to view progress and notifications
+
+   ![alt_text](images/image6.png "image_tooltip")
+
+
+7. Select "Kubernetes: Run/Debug - Detailed" in the channel drop down to the right to view additional details and logs streaming live from the containers
+
+   ![alt_text](images/image7.png "image_tooltip")
+
+8. Return to the simplified view by selecting “Kubernetes: Run/Debug” from the dropdown
+9. When the build and tests are done, the Output tab says: `Resource deployment/demo-app status completed successfully`, and a url is listed: “Forwarded URL from service demo-app: http://localhost:8080”
+10. In the Cloud Code terminal, hover over the URL in the output (http://localhost:8080), and then in the tool tip that appears select Open Web Preview. 
+
+    The response will be:
+    ```
+    Hello from your local environment!
+    ```
+
+## Utilize Breakpoints
+
+1. Open the HelloController.java application located at `/src/main/java/com/example/springboot/HelloController.java`
+2. Locate the return statement for the root path which reads `return String.format("Hello from your %s environment!", target);`
+3. Add a breakpoint to that line by clicking the blank space to the left of the line number. A red indicator will show to note the breakpoint is set
+4. Reload your browser and note the debugger stops the process at the breakpoint and allows you to investigate the variable sand state of the application which is running remotely in GKE
+5. Click down into the variables section until you find the “Target” variable. 
+6. Observe the current value as “local”
+7. Double click on the variable name “target” and in the popup, change the value to something different like “Cloud”
+8. Click the Continue button in the debug control panel
+9. Review the response in your browser which now shows the updated value you just entered.
+
+## Hot Reload
+1. Change the statement to return a different value such as “Hello from Cloud Code”
+2. The file is automatically saved and synced into the remote containers in GKE
+3. Refresh your browser to see the updated results. 
+
+# Developing a simple CRUD Rest Service
+
+At this point your application is fully configured for containerized development and you’ve walked through the basic development workflow with Cloud Code. In the following sections you practice what you’ve learned by adding rest service endpoints connecting to a managed database in Google Cloud.
+
+## Configure Dependencies
+
+The application code utilizes a database to persist the rest service data. Ensure the dependencies are available by adding the following in the pom.xl
+
+1. Open the `pom.xml` file and add the following into the dependencies section of the config
+
+```xml
+    <!--  Database dependencies-->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-data-jpa</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.h2database</groupId>
+      <artifactId>h2</artifactId>
+      <scope>runtime</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.postgresql</groupId>
+      <artifactId>postgresql</artifactId>
+      <scope>runtime</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.flywaydb</groupId>
+      <artifactId>flyway-core</artifactId>
+    </dependency>
+```
+
+## Code the REST service
+
+**Quote.java**
+
+Create a file called Quote.java in `/src/main/java/com/example/springboot/` and copy in the code below. This defines the Entity model for the Quote object used in the application.
+
+```java
+package com.example.springboot;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -239,9 +393,12 @@ public class Quote
 }
 ```
 
-The intent is to use JPA for persisting the data, therefore the need to create a repository class `QUoteRepository`, which extends the Spring `JPARepository` interface and allows the creation of custom code. This class will create a `findRandomQuote` custom method.
+**QuoteRepository.java**
+
+Create a file called  QuoteRepository.java  at src/main/java/com/example/springboot and copy in the following code
+
 ```java
-package com.example;
+package com.example.springboot;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -254,9 +411,16 @@ public interface QuoteRepository extends JpaRepository<Quote,Integer> {
 }
 ```
 
-To expose the endpoint for the service, a `QuoteController` class will provide this functionality
+This code uses JPA for persisting the data. The class extends the Spring `JPARepository` interface and allows the creation of custom code. In the code you’ve added a `findRandomQuote` custom method.
+
+**QuoteController.java**
+
+To expose the endpoint for the service, a `QuoteController` class will provide this functionality. 
+
+Create a file called QuoteController.java at `src/main/java/com/example/springboot` and copy in the following contents
+
 ```java
-package com.example;
+package com.example.springboot;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -293,12 +457,14 @@ public class QuoteController {
     {
         try {
             List<Quote> quotes = new ArrayList<Quote>();
-            
+
+
             quoteRepository.findAll().forEach(quotes::add);
 
             if (quotes.size()==0 || quotes.isEmpty()) 
                 return new ResponseEntity<List<Quote>>(HttpStatus.NO_CONTENT);
-                
+
+
             return new ResponseEntity<List<Quote>>(quotes, HttpStatus.OK);
         } catch (Exception e) {
             System.out.println(e.getMessage());
@@ -321,7 +487,8 @@ public class QuoteController {
     public ResponseEntity<Quote> updateQuote(@PathVariable("id") Integer id, @RequestBody Quote quote) {
         try {
             Optional<Quote> existingQuote = quoteRepository.findById(id);
-            
+
+
             if(existingQuote.isPresent()){
                 Quote updatedQuote = existingQuote.get();
                 updatedQuote.setAuthor(quote.getAuthor());
@@ -350,27 +517,12 @@ public class QuoteController {
 }
 ```
 
-It exposes the following endpoints:
-```java
-    // retrieve a random quote
-    @GetMapping("/random-quote") 
+## Add Database Configurations
 
-    // retrieve all quotes from the backend
-    @GetMapping("/quotes") 
+**application.yaml**
 
-    // create a new quote
-    @PostMapping("/quotes")
+Add configuration for the backend database accessed by the service. Edit file called `application.yaml` file under` src/main/resources` and add a parameterized Spring configuration for the backend.
 
-    // update and existing quote
-    @PutMapping("/quotes/{id}")
-
-    // delete a quote
-    @DeleteMapping("/quotes/{id}")
-```
-
-## Add configuration for the backend database accessed by the service
-
-Open the `application.yaml file under `src/main/resources` and add a parameterized Spring configuration for the backend.
 ```yaml
 spring:
   config:
@@ -391,50 +543,16 @@ spring:
       ddl-auto: update
 ```
 
-The DB_HOST, DB_DATABASE, DB_USER and DB_PASS parameters will be set via externalized K8s configuration.
 
-## Update the dependencies in the Maven POM file
-Before the app can be compiled, the Maven POM file must be updated with the Spring JPA, Postgres, Flyway and H2 dependencies.
+**Add Database Migration**
 
-```xml
-    <!--  Database sependencies-->
-    <dependency>
-      <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-starter-data-jpa</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.h2database</groupId>
-      <artifactId>h2</artifactId>
-      <scope>runtime</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.postgresql</groupId>
-      <artifactId>postgresql</artifactId>
-      <scope>runtime</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.flywaydb</groupId>
-      <artifactId>flyway-core</artifactId>
-    </dependency>
-```
+Create a folder at src/main/resources/db/migration/
 
-## Add containerized unit tests leveraging Testcontainers
+create a SQL file: `V1__create_quotes_table.sql 
+
+Paste the following contents into the file
 
 
-Let's start leveraging Testcontainers in order to test the Quote service in a containerized manner, similar to service execution in production.
-
-To this end, we have to start by creating a good starting point for the test strategy, in two steps:
-* set up data
-* write up tests
-
-Using the Java API, developers can easily provision databases at application start-up, portable across backends (local, cloud)m using Flyway.
-Flyway is an open-source database migration tool, which strongly favors simplicity and convention over configuration.
-
-Let's provision a simple set of 5 quotes in the database, executed at app start-up.
-
-* create a folder `db/migration` under `src/main/resources`: `src/main/resources/db/migration/`. 
-* create a SQL file: `V1__create_quotes_table.sql`
-* paste the following SQL lines
 ```sql
 CREATE TABLE quotes(
    id INTEGER PRIMARY KEY,
@@ -449,283 +567,60 @@ INSERT INTO quotes (id,quote,author) VALUES (4,'Success demands singleness of pu
 INSERT INTO quotes (id,quote,author) VALUES (5,'The shortest answer is doing','Lord Herbert');
 ```
 
-In the pom.xml, let's add the required dependencies.
+**deployment.yaml**
 
-Add the testcontainers version under the `<properties>` section:
-```xml
-<testcontainers.version>1.16.3</testcontainers.version>
-
-# Section will look like
-  <properties>
-    <java.version>1</java.version>
-	<spring-cloud.version>2021.0.1</spring-cloud.version>
-    <testcontainers.version>1.16.3</testcontainers.version>
-  </properties>
-```
-
-Add the Junit and Testcontainers dependencies in the `<dependencies>` section:
-```xml
-    <!-- Test dependencies -->
-    <dependency>
-      <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-starter-test</artifactId>
-      <scope>test</scope>
-      <exclusions>
-        <exclusion>
-          <groupId>org.junit.vintage</groupId>
-          <artifactId>junit-vintage-engine</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-    <dependency>
-      <groupId>org.testcontainers</groupId>
-      <artifactId>junit-jupiter</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.testcontainers</groupId>
-      <artifactId>postgresql</artifactId>
-      <scope>test</scope>
-    </dependency>
-```
-
-Add the Testcontainers BOM in the `<dependencyManagement/dependencies>` section:
-```xml
-          <dependency>
-            <groupId>org.testcontainers</groupId>
-            <artifactId>testcontainers-bom</artifactId>
-            <version>${testcontainers.version}</version>
-            <type>pom</type>
-            <scope>import</scope>
-          </dependency>
-```
-
-In the source code, there are two areas to be addressed: test code and test configuration.
-
-Add the following configuration to the `application-test.yaml` file under `src/test/resources`:
-```yaml
-spring:
-  datasource:
-    url: "jdbc:tc:postgresql:13:///quotes?TC_TMPFS=/testtmpfs:rw"
-```
-
-Add the test code in the `src/test/com/example` folder as `QuotesRepositoryTest.java`:
-```java
-package com.example;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.testcontainers.DockerClientFactory.TESTCONTAINERS_LABEL;
-
-import com.github.dockerjava.api.model.Container;
-import java.util.Map;
-
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.ActiveProfiles;
-import org.testcontainers.DockerClientFactory;
-
-@SpringBootTest
-@ActiveProfiles("test")
-class QuotesRepositoryTest {
-
-  @BeforeEach
-  void debug() {
-    // print a list of all the containers test containers are currently running
-    var client = DockerClientFactory.instance().client();
-    var containers = client.listContainersCmd()
-        .withLabelFilter(Map.of(TESTCONTAINERS_LABEL, "true")).exec();
-    for (Container container : containers) {
-      System.out.println(container.getImage());
-    }
-  }
-
-  @Test
-  @DisplayName("A random quote is returned")
-  void testRandomQuotes(@Autowired QuoteRepository quoteRepository) {
-    var quote = quoteRepository.findRandomQuote();
-    assertThat(quote).isNotNull();
-  }
-
-  @Test
-  @DisplayName("All quotes are returned")
-  void testAllQuotes(@Autowired QuoteRepository quoteRepository) {
-    var quotes = quoteRepository.findAll();
-    assertThat(quotes).isNotNull();
-  }
-
-  @Test
-  @DisplayName("Create a quote")
-  void testCreateQuote(@Autowired QuoteRepository quoteRepository){
-    var quote = new Quote();
-    quote.setId(6);
-    quote.setAuthor("Confucius");
-    quote.setQuote("Our greatest glory is not in never falling, but in rising every time we fall");
-
-    var result = quoteRepository.save(quote);
-    assertThat(result.getAuthor()).isEqualTo("Confucius");
-  }
-
-  @Test
-  @DisplayName("Delete a quote - good")
-  void testDeleteQuoteGood(@Autowired QuoteRepository quoteRepository){
-    var quote = new Quote();
-    quote.setId(6);
-    quote.setAuthor("Confucius");
-    quote.setQuote("Our greatest glory is not in never falling, but in rising every time we fall");
-
-    var result = quoteRepository.save(quote);
-    assertThat(result.getAuthor()).isEqualTo("Confucius");
-
-    assertDoesNotThrow(() -> {
-      quoteRepository.deleteById(6);
-    });
-  }
-
-}
-```
-
-In order to validate a correct build of the application, let's proceed to deploy the app to the GKE cluster.
-As part of the build process, the app will be built, unit tests executed and any failure will be reported.
-
-Repeat the process to deploy to GKE using Cloud Code, for example F1 + select `Cloud Code: Run on Kubernetes` !
-
-## Test the CRUD service in GKE
-
-Let's use either cURL or HTTPie for testing the app, from a Terminal window:
-```shell
-# run repeatedly a GET against the random-quote endpoint
-# observe repeated call returning different quotes
-curl -v 127.0.0.1:8080/random-quote
-  or
-http :8080/random-quote
-
-# create a new quote, with id=6
-# observe the request being echo'ed back
-curl -v -H 'Content-Type: application/json' -d '{"id":"6","author":"Henry David Thoreau","quote":"Go confidently in the direction of your dreams! Live the life you’ve imagined"}' -X POST 127.0.0.1:8080/quotes
-  or 
-http PUT :8080/quotes/6 author="Henry David Thoreau" quote="Go confidently in the direction of your dreams! Live the life you’ve imagined" id="6"
-
-# delete a quote
-curl -v -X DELETE 127.0.0.1:8080/quotes/6
-  or 
-http DELETE :8080/quotes/6
-```
-
-Run the last request again, after the quote has previously been deleted and observe an `HTTP:500 Internal Server Error`. Let's find out why this is happening !!!
-
-1. Stop the Cloud Code session and restart as a Debug session:
-* F1 + Cloud Code: Debug on Kubernetes
-* Click Cloud Code link in the IDE and select the Cloud Code: Debug on Kubernetes option
-
-2. The error occurred in the DELETE operation, therefore let's open the `QuoteController` class, go to the `deleteQuote()` method and set a breakpoint on the line where er delete an item from the database: `quoteRepository.deleteById(id);`
-
-3. Run the `delete` command again and observe the debug line stopped in the QuoteController class.
-In the debugger, `step over` the `deleteById()` invocation and observe that an exception is thrown, due to the fact that the `quote` with `id=6` does not exist in the database.
-
-4. Note that in the code we caught a very generic `RuntimException`, which sends back an Internal Server Error HTTP 500.
-
-5. The code is incorrect and the exception block should be refactored to catch the `EmptyResultDataAccessException` exception and send back an HTTP 404 not found status code.
-
-Let's correct the error. With the Debug session still running `!!!`, add the following block to the code:
-```java 
-        } catch(EmptyResultDataAccessException e){
-            return new ResponseEntity<HttpStatus>(HttpStatus.NOT_FOUND);
-        }
-
-// method should look like
-    public ResponseEntity<HttpStatus> deleteQuote(@PathVariable("id") Integer id) {
-        try {
-            quoteRepository.deleteById(id);
-            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-        } catch(EmptyResultDataAccessException e){
-            return new ResponseEntity<HttpStatus>(HttpStatus.NOT_FOUND);
-        } catch (RuntimeException e) {
-            System.out.println(e.getMessage());
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    } 
-```
- 
-Step through the debugger and observe the `EmptyResultDataAccessException` being caught and an HTTP 404 Not Found returned to the caller.
-The `Local Variables` can be observed in the `Cloud Code - Kubernetes` view!
-
-Stop the debugging session.
-
-In this section you have learned how to debug directly in a Kubernetes cluster in GKE, set breakpoints, fuind and fix errors.
-
-## Last step - add the missing unit test
-A lesson was to be learned that we should pay attention to write good tests before deploying.
-
-Let's correct this by adding a test method to the `QuotesRepositoryTest` test class:
-```java
-  @Test
-  @DisplayName("Delete a quote - failed")
-  void testDeleteQuote(@Autowired QuoteRepository quoteRepository){
-    assertThatThrownBy(() -> {
-      quoteRepository.deleteById(100);
-    }).isInstanceOf(org.springframework.dao.EmptyResultDataAccessException.class);
-  }
-  ```
-
-To validate that the test method is correct, we can simply run a `mvn verify` command from a terminal window and observe all our tests passing.
-
-Alternatively, you can open `Test` view (test glass icon), right click on QuotesRepositoryTest and `Run Tests`. You should observe 5 tests executing correctly.
-
-### This concludes the mandatory part of the lab - please run the Optional part of the lab, where the app will be connected to a CloudSQL for Postgres managed instance
-
-------
-
-## [Optional] Connect the app to a Google CloudSQL instance (CloudSQL for Postgres)
-
-The starter app has evolved throughout the course of the lab, with the addition of a the `Quote` CRUD service, connected to a Postgres backend.
-
-`Quick reminders` 
-* up to this point, the backend has been implemented by the H2 Java Database, running in-memory. Testing has been performed using a containerized Postgres database, abstracted through the usagge of Testcontainers.
-* at application start, you could observe, when selecting the `Kubernetes: Run/Debug Detailed` option in the dropdown located in the `Output` tab of the `Cloud Code - Kubernetes` view, the database being used, an in-memory database:
-  ```yaml
-  [demo-app]... --- [  restartedMain] o.f.c.i.database.base.BaseDatabaseType   : Database: jdbc:h2:mem:faa65c63-110b-4723-95d8-bbd3fb2642cb (H2 1.4)
-  ```
-* the datasource configuration has already been configured using externalized variables in the `src/main/resources/application.yaml` file. This configuration is being activated by the `cloud-dev` profile set in the deployment manifest `deployment.yaml`:
-  ```yaml
-  spring:
-    config:
-      activate:
-        on-profile: cloud-dev
-    datasource:
-      url: 'jdbc:postgresql://${DB_HOST:127.0.0.1}/${DB_DATABASE:quote_db}'
-      username: '${DB_USER:user}'
-      password: '${DB_PASS:password}'
-  ...    
-  ```    
-
-At this time, the app can be enhanced and connected directly to a `CloudSQL for Postgres managed instance in the Google Cloud`.
-
-To set up a CloudSQL for Postgres database instance, please follow the instructions in [CloudSQL Setup Instructions](./docs/CloudSQLSetup.md).
-
-The following additions to the `deployment.yaml` file allow the application to connect to the CloudSQL instances.
-Notes:
+The following additions to the `deployment.yaml` file allow the application to connect to the CloudSQL instances. 
 * TARGET - configures the variable to indicate the environment where the app is executed
 * SPRING_PROFILES_ACTIVE - shows the active Spring profile, which will be configured to `cloud-dev`
 * DB_HOST - the private IP for the database, which has been noted when the database instance has been created or by clicking `SQL` in the Navigation Menu of the Google Cloud Console - please change the value !
 * DB_USER and DB_PASS - as set in the CloudSQL instance configuration, stored as a Secret in GCP
 
+Update your deployment.yaml with the contents below. 
+
+
 ```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: demo-app
+  labels:
+    app: demo-app
+spec:
+  ports:
+  - port: 8080
+    protocol: TCP
+  clusterIP: None
+  selector:
+    app: demo-app
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: demo-app
+  labels:
+    app: demo-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: demo-app
+  template:
+    metadata:
+      labels:
+        app: demo-app
+    spec:
+      containers:
+      - name: demo-app
+        image: demo-app
         env:
           - name: PORT
             value: "8080"
           - name: TARGET
             value: "Local Dev - CloudSQL Database - K8s Cluster"
-          # set the profile to use
           - name: SPRING_PROFILES_ACTIVE
             value: cloud-dev
           - name: DB_HOST
-            value: PRIVATE-IP-OF-DATABASE  # example "172.24.0.3" 
+            value: ${DB_INSTANCE_IP}   
           - name: DB_PORT
             value: "5432"  
           - name: DB_USER
@@ -742,40 +637,135 @@ Notes:
             valueFrom:
               secretKeyRef:
                 name: gke-cloud-sql-secrets
-                key: database       
-```                
+                key: database 
 
-Save the file and start the app in the GKE cluster from `Cloud Code: Run on Kubernetees
 
-Observe, in the `Kubernetes: Run/Debug - Detailed` dropdown that the app connects to the previously configured CloudSQL instance at <private IP of database>
-```
-...
-[demo-app]... --- [  restartedMain] o.s.b.a.h2.H2ConsoleAutoConfiguration    : H2 console available at '/h2-console'. Database available at 'jdbc:postgresql://172.24.0.3/quote_db'
-...
 ```
 
-Test the app and observe that the root endpoint indicates in its output the environment change: `Local Dev - CloudSQL Database - K8s Cluster environment!`
-```
-Let's use either cURL or HTTPie for testing the app, from a Terminal window:
+Replace the DB_HOST value with the Address of your Database
+
 ```shell
-curl -v 127.0.0.1:8080
-  or
-http :8080
+export DB_INSTANCE_IP=$(gcloud sql instances describe quote-db-instance \
+    --format=json | jq \
+    --raw-output ".ipAddresses[].ipAddress")
 
-# Output: Hello from your Local Dev - CloudSQL Database - K8s Cluster environment!
-
-curl -v 127.0.0.1:8080/random-quote
-  or
-http :8080/random-quote
-
-# Output: 
-{
-    "author": "Marcus Tullius Cicero",
-    "id": 2,
-    "quote": "While there's life, there's hope"
-}
+envsubst < deployment.yaml > deployment.new && mv deployment.new deployment.yaml
 ```
 
-Stop the application running in GKE!
+## Deploy and Validate Application
 
-## Congratulations - you have successfully completed the lab !
+1. In the pane at the bottom of Cloud Shell Editor, select Cloud Code  then select Debug on Kubernetes at the top of the screen. 
+2. When the build and tests are done, the Output tab says: `Resource deployment/demo-app status completed successfully`, and a url is listed: “Forwarded URL from service demo-app: http://localhost:8080”
+3. View Random Quotes
+
+    From cloudshell Terminal, run the command below multiple times against the random-quote endpoint. Observe repeated call returning different quotes
+
+    ```shell
+    curl -v 127.0.0.1:8080/random-quote
+    ```
+
+4. Add a Quote
+
+    Create a new quote, with id=6 using the command listed below and observe the request being echoed back
+
+    ```shell
+    curl -v -H 'Content-Type: application/json' -d '{"id":"6","author":"Henry David Thoreau","quote":"Go confidently in the direction of your dreams! Live the life you've imagined"}' -X POST 127.0.0.1:8080/quotes
+    ```
+
+5. Delete a quote
+
+    Now delete the quote you just added with the delete method
+    ```shell
+    curl -v -X DELETE 127.0.0.1:8080/quotes/6
+    ```
+
+6. Server Error
+
+    Experience an error state by running the last request again after the entry has already been deleted 
+
+    ```shell
+    curl -v -X DELETE 127.0.0.1:8080/quotes/6
+    ```
+
+    Notice the response returns an `HTTP:500 Internal Server Error`. 
+
+## Debug the application
+
+In the previous section you found an error state in the application when you tried to delete an entry that was not in the database. In this section you’ll set a breakpoint to locate the issue. The error occurred in the DELETE operation, so you’ll work with the QuoteController class.
+
+1. Open src.main.java.com.example.springboot.QuoteController.java
+2. Find the `deleteQuote()` method 
+3. Find the the line where delete an item from the database: `quoteRepository.deleteById(id);`
+4. Set a breakpoint on that line by clicking the blank space to the left of the line number. 
+5. A red indicator will appear indicating the breakpoint is set
+6. Run the `delete` command again 
+
+    ```
+    curl -v -X DELETE 127.0.0.1:8080/quotes/6
+    ```
+
+7. Switch back to the debug view by clicking the icon in the left column
+8. Observe the debug line stopped in the QuoteController class. 
+9. In the debugger, click the `step over` icon 
+
+![alt_text](images/image3.png "image_tooltip")
+ and observe that an exception is thrown.
+
+10. Observe that a very generic `RuntimeException was caught.` This returns an Internal Server Error HTTP 500 to the client which is not ideal. 
+
+## Update the code
+
+The code is incorrect and the exception block should be refactored to catch the `EmptyResultDataAccessException` exception and send back an HTTP 404 not found status code.
+
+Correct the error. 
+
+1. With the Debug session still running, complete the request by pressing the “continue” button in the debug control panel.
+2. Next add the following block to the code:
+
+
+```java
+        } catch (EmptyResultDataAccessException e){
+            return new ResponseEntity<HttpStatus>(HttpStatus.NOT_FOUND);
+        }
+```
+
+    The method should look like the following:
+```java
+        public ResponseEntity<HttpStatus> deleteQuote(@PathVariable("id") Integer id) {
+            try {
+                quoteRepository.deleteById(id);
+                return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+            } catch(EmptyResultDataAccessException e){
+                return new ResponseEntity<HttpStatus>(HttpStatus.NOT_FOUND);
+            } catch (RuntimeException e) {
+                System.out.println(e.getMessage());
+                return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+        }
+
+```
+
+3. Rerun the delete command
+
+    ```
+    curl -v -X DELETE 127.0.0.1:8080/quotes/6
+    ```
+
+4. Step through the debugger and observe the `EmptyResultDataAccessException` being caught and an HTTP 404 Not Found returned to the caller. 
+5. Stop the debugging session by clicking on the red square in the debug toolbar 
+
+   ![alt_text](images/image10.png "image_tooltip")
+
+
+
+# Cleanup
+
+Congratulations! In this lab you’ve created a new Java application from scratch and configured it to work effectively with containers. You then deployed and debugged your application to a remote GKE cluster following the same developer flow found in traditional application stacks. 
+
+To clean up after completing the lab: 
+1. Delete the files used in the lab
+
+    ```shell
+    cd ~ && rm -rf container-developer-workshop
+    ```
+2. Delete the project to remove all related infrastructure and resources
