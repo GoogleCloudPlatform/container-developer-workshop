@@ -5,18 +5,9 @@ export PROJECT_NUMBER=$(gcloud projects describe $PROJECT_ID --format='value(pro
 gcloud services enable \
     cloudresourcemanager.googleapis.com \
     container.googleapis.com \
+    sourcerepo.googleapis.com \
     containerregistry.googleapis.com \
-    artifactregistry.googleapis.com \
     spanner.googleapis.com 
-
-
-## ARTIFACT REGISTRY
-
-gcloud artifacts repositories create python-app \
---repository-format=docker \
---location=us-east1 
-
-gcloud auth configure-docker us-east1-docker.pkg.dev -q
 
 
 
