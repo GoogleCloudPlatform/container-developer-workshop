@@ -1,0 +1,42 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: python-app
+  labels:
+    app: python-app
+spec:
+  ports:
+  - port: 8080
+    targetPort: 8080
+    protocol: TCP
+  clusterIP: None
+  selector:
+    app: python-app
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: python-app
+  labels:
+    app: python-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: python-app
+  template:
+    metadata:
+      labels:
+        app: python-app
+    spec:         
+      containers:
+      - name: python-app
+        image: python-app     
+        ports:
+        - containerPort: 8080
+        env:
+          - name: PORT
+            value: "8080"
+      serviceAccountName: python-ksa
+      nodeSelector:
+        iam.gke.io/gke-metadata-server-enabled: "true"     

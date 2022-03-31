@@ -1,0 +1,17 @@
+apiVersion: skaffold/v2beta27
+kind: Config
+metadata:
+  name: python
+build:
+  artifacts:
+  - image: python-app
+    docker:
+      dockerfile: Dockerfile
+deploy:
+  kubectl:
+    manifests:
+    - deployment.yaml
+portForward:
+- resourceType: service
+  resourceName: python-app
+  port: 8080
