@@ -32,11 +32,6 @@ spec:
       containers:
       - name: python-app
         image: python-app     
-        ports:
-        - containerPort: 8080
-        env:
-          - name: PORT
-            value: "8080"
       serviceAccountName: python-ksa
       nodeSelector:
         iam.gke.io/gke-metadata-server-enabled: "true"     

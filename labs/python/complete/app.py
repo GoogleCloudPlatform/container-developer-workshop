@@ -127,6 +127,6 @@ def delete_singer():
     except Exception as e:
         return e
 
-port = int(os.environ.get('PORT', 8080))
 if __name__ == '__main__':
-    app.run(threaded=True, host='0.0.0.0', port=port)
+    server_port = os.environ.get('PORT', '8080')
+    app.run(debug=False, port=server_port, host='0.0.0.0')
