@@ -30,12 +30,12 @@ database = instance.database(database_id)
 def hello_world():
     return "<p>Hello, World!</p>"
 
-@app.route('/add', methods=['POST'])
+@app.route('/singer', methods=['POST'])
 def create():
     """
         create() : Add a new entry to Spanner with request body.
         Sample Request:
-        curl -X POST http://localhost:8080/add -H 'Content-Type: application/json' -d '{"first_name":"Cat","last_name":"Meow", "singer_id": 6}'
+        curl -X POST http://localhost:8080/singer -H 'Content-Type: application/json' -d '{"first_name":"Cat","last_name":"Meow", "singer_id": 6}'
     """
     try:
         request_json = request.get_json()
@@ -55,12 +55,12 @@ def create():
     except Exception as e:
         return e
 
-@app.route('/get-singer', methods=['GET'])
+@app.route('/singer', methods=['GET'])
 def get_singer():
     """
         create() : Add a new entry to Spanner with request body.
         Sample Request:
-        curl -X GET http://localhost:8080/get-singer?singer_id=6
+        curl -X GET http://localhost:8080/singer?singer_id=6
     """
 
     try:
@@ -82,12 +82,12 @@ def get_singer():
     except Exception as e:
         return e
 
-@app.route('/update-first-name', methods=['PUT'])
+@app.route('/singer', methods=['PUT'])
 def update_singer_first_name():
     """
         delete() : Delete an entry from Spanner.
         Sample Request:
-        curl -X PUT http://localhost:8080/update-first-name?singer_id=6 -H 'Content-Type: application/json' -d '{"first_name":"Bow"}'
+        curl -X PUT http://localhost:8080/singer?singer_id=6 -H 'Content-Type: application/json' -d '{"first_name":"Bow"}'
     """
     try:
         singer_id = request.args.get('singer_id')
@@ -106,12 +106,12 @@ def update_singer_first_name():
     except Exception as e:
         return e
 
-@app.route('/delete-singer', methods=['DELETE'])
+@app.route('/singer', methods=['DELETE'])
 def delete_singer():
     """
         delete() : Delete an entry from Spanner.
         Sample Request:
-        curl -X DELETE http://localhost:8080/delete-singer?singer_id=6
+        curl -X DELETE http://localhost:8080/singer?singer_id=6
     """
     try:
         singer_id = request.args.get('singer_id')
