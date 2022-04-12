@@ -73,7 +73,7 @@ mkdir music-service && cd music-service && cloudshell workspace .
 
 
 
-    If the terminal is NOT open use the key combination of `ctrl+`` to open a new terminal window
+If the terminal is NOT open use the key combination of `ctrl+`` to open a new terminal window
 
 
 
@@ -104,7 +104,7 @@ ptvsd==4.3.2" >> requirements.txt
 
 2. Create a file named `app.py `and paste the following code into it
 
-```
+```py
 import os
 from flask import Flask, request, jsonify
 from google.cloud import spanner
@@ -125,7 +125,7 @@ if __name__ == '__main__':
 
 3. Create a file named Dockerfile and paste the following into it
 
-```
+```yaml
 FROM python:3.8
 WORKDIR /app
 COPY requirements.txt .
@@ -166,10 +166,10 @@ Choose:
 
 
 1. Change default application name
-* sed -i 's/dockerfile-image/python-app/' skaffold.yamlOpen `skaffold.yaml`
-* Select the image name currently set as `dockerfile-image`
-* Right click and choose Change All Occurrences
-* Type in the new name as `python-app`
+    * Open `skaffold.yaml`
+    * Select the image name currently set as `dockerfile-image`
+    * Right click and choose Change All Occurrences
+    * Type in the new name as `python-app`
 
 
 ## Modify Kubernetes Configuration File
@@ -177,10 +177,10 @@ Choose:
 
 
 1. Change the default Name
-* sed -i 's/dockerfile-image/python-app/' deployment.yamlOpen `deployment.yaml` file 
-* Select the image name currently set as `dockerfile-image`
-* Right click and choose Change All Occurrences
-* Type in the new name as `python-app`
+    * Open `deployment.yaml` file 
+    * Select the image name currently set as `dockerfile-image`
+    * Right click and choose Change All Occurrences
+    * Type in the new name as `python-app`
 
 
 # Walking through the development process
