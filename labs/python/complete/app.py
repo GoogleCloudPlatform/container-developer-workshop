@@ -111,7 +111,7 @@ def delete_singer():
     """
         delete() : Delete an entry from Spanner.
         Sample Request:
-        curl -X DELETE http://localhost:8080/get-singer?singer_id=6
+        curl -X DELETE http://localhost:8080/delete-singer?singer_id=6
     """
     try:
         singer_id = request.args.get('singer_id')
