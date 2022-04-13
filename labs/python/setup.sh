@@ -48,7 +48,10 @@ export SPANNER_DB=musicians REGION=us-east1
 gcloud spanner instances create $SPANNER_INSTANCE \
     --config=regional-${REGION} \
     --description="Music Catalog" \
-    --nodes=1
+    --nodes=1 \
+    --processing-units=100
+
+gcloud alpha spanner instances update $SPANNER_INSTANCE --processing-units=100
 
 export SPANNER_CONNECTION_STRING=projects/$PROJECT_ID/instances/$SPANNER_INSTANCE/databases/$SPANNER_DB
 
