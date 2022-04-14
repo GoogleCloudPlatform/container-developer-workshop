@@ -216,14 +216,9 @@ Skaffold provides integrated tools to simplify container development.  In this s
 skaffold init --generate-manifests
 ```
 
-
-
-	When prompted:
-
-
-
-    *   Enter **8080** for the port
-    *   Enter **y** to save the configuration
+When prompted:
+* Enter **8080** for the port
+* Enter **y** to save the configuration
 
 Two files are added to the workspace viz, `skaffold.yaml `and `deployment.yaml`
 
