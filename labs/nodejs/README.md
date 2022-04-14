@@ -124,11 +124,7 @@ nvm alias default stable
 npm init
 ```
 
-
-
-	
-
-	Choose the `entry point: (index.js) src/index.js` and default values for the rest of the parameters. This will create the file with following contents
+Choose the `entry point: (index.js) src/index.js` and default values for the rest of the parameters. This will create the file with following contents
 
 
 ```
