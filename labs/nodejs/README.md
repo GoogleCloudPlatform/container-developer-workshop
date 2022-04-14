@@ -60,7 +60,7 @@ The source code for this lab is located in the container-developer-workshop in G
 1. Download setup script and make it executable.
 
 ```
-wget https://raw.githubusercontent.com/VeerMuchandi/InnerLoopDev/main/setup.sh
+wget https://raw.githubusercontent.com/GoogleCloudPlatform/container-developer-workshop/main/labs/nodejs/setup.sh
 chmod +x setup.sh
 ```
 
@@ -378,7 +378,7 @@ The application code uses a database to persist the rest service data. Ensure th
 1. Add the CRUD application code to this application
 
 ```
-wget -O app.zip https://github.com/VeerMuchandi/InnerLoopDev/blob/main/nodejs-crudcode/app/app.zip?raw=true
+wget -O app.zip https://github.com/GoogleCloudPlatform/container-developer-workshop/raw/main/labs/nodejs/app.zip
 
 unzip app.zip
 ```
