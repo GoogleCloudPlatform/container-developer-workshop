@@ -97,4 +97,4 @@ kubectl annotate serviceaccount \
 kubectl create secret generic gke-cloud-sql-secrets \
   --from-literal=database=$DB_NAME \
   --from-literal=username=$DB_USER \
-  --from-literal=password=$DB_PASS
+  --from-literal=password=$DB_PASSWORD
