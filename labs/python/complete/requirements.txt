@@ -1,0 +1,4 @@
+Flask
+gunicorn
+google-cloud-spanner
+ptvsd==4.3.2
