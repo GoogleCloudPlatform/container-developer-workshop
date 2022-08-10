@@ -9,6 +9,8 @@ export DB_NAME=item_db
 export DB_USER=test-user
 export DB_PASSWORD=CHANGEME
 
+export USE_GKE_GCLOUD_AUTH_PLUGIN=True
+
 
 
 gcloud services enable \
