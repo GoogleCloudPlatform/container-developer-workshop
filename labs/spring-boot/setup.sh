@@ -56,17 +56,17 @@ gcloud beta sql instances create $DB_INSTANCE_NAME \
     --cpu=2 \
     --memory=4GB \
     --region=$REGION \
-    --root-password=${DB_INSTANCE_PASSWORD}\
+    --root-password=${DB_INSTANCE_PASSWORD} \
     --async
 
 echo "Checking database readiness"
 while [ $(gcloud sql instances list --filter="name=quote-db-instance" --format="value(STATUS)") != "RUNNABLE" ]
 do
   echo "Waiting for database to be ready"
-  sleep 1
+  sleep 15s
 done
 
-sleep 20s
+sleep 15s
 
 gcloud sql databases create ${DB_NAME} --instance=${DB_INSTANCE_NAME}
 
@@ -94,7 +94,7 @@ echo "Checking GKE clustering readiness"
 while [ $(gcloud container clusters list --filter="name=quote-cluster" --format="value(status)") == "PROVISIONING" ]
 do
   echo "Waiting for GKE cluster to be ready"
-  sleep 1
+  sleep 15s
 done
 gcloud container clusters get-credentials quote-cluster --region="us-central1" 
 
