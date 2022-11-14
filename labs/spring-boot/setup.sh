@@ -28,7 +28,7 @@ gcloud services enable \
 ## Create GKE Cluster
 #gcloud container clusters create mycluster --zone=us-central1-b
 gcloud beta container --project "$PROJECT_ID" clusters create-auto "quote-cluster" \
---region "us-central1"
+--region "us-central1" --async
 
 
 ## Configure Private VPC
@@ -56,7 +56,17 @@ gcloud beta sql instances create $DB_INSTANCE_NAME \
     --cpu=2 \
     --memory=4GB \
     --region=$REGION \
-    --root-password=${DB_INSTANCE_PASSWORD}
+    --root-password=${DB_INSTANCE_PASSWORD}\
+    --async
+
+echo "Checking database readiness"
+while [ $(gcloud sql instances list --filter="name=quote-db-instance" --format="value(STATUS)") != "RUNNABLE" ]
+do
+  echo "Waiting for database to be ready"
+  sleep 1
+done
+
+sleep 20s
 
 gcloud sql databases create ${DB_NAME} --instance=${DB_INSTANCE_NAME}
 
@@ -79,6 +89,14 @@ gcloud iam service-accounts create gke-quotedb-service-account \
 gcloud projects add-iam-policy-binding $PROJECT_ID \
   --member="serviceAccount:gke-quotedb-service-account@$PROJECT_ID.iam.gserviceaccount.com" \
   --role="roles/cloudsql.client"
+
+echo "Checking GKE clustering readiness"
+while [ $(gcloud container clusters list --filter="name=quote-cluster" --format="value(status)") == "PROVISIONING" ]
+do
+  echo "Waiting for GKE cluster to be ready"
+  sleep 1
+done
+gcloud container clusters get-credentials quote-cluster --region="us-central1" 
 
 
 
@@ -104,4 +122,3 @@ kubectl create secret generic gke-cloud-sql-secrets \
   --from-literal=database=$DB_NAME \
   --from-literal=username=$DB_USER \
   --from-literal=password=$DB_PASSWORD
-  
