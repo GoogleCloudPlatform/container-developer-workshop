@@ -27,8 +27,8 @@ gcloud services enable \
 
 ## Create GKE Cluster
 #gcloud container clusters create mycluster --zone=us-central1-b
-gcloud beta container --project "$PROJECT_ID" clusters create-auto "quote-cluster" \
---region "us-central1" --async
+gcloud container --project "$PROJECT_ID" clusters create "quote-cluster" \
+--region "us-central1" --num-nodes=2 --async
 
 
 ## Configure Private VPC
