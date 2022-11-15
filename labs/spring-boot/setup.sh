@@ -28,7 +28,7 @@ gcloud services enable \
 ## Create GKE Cluster
 #gcloud container clusters create mycluster --zone=us-central1-b
 gcloud container --project "$PROJECT_ID" clusters create "quote-cluster" \
---region "us-central1" --num-nodes=2 --async
+--region "us-central1" --num-nodes=2 --workload-pool=$PROJECT_ID.svc.id.goog --async
 
 
 ## Configure Private VPC
