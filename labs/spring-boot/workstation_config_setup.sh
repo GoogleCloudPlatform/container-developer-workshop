@@ -6,8 +6,8 @@ export REGION=us-central1
 export PROJECT_ID=$(gcloud config get-value project)
 export PROJECT_NUMBER=$(gcloud projects describe $PROJECT_ID --format='value(projectNumber)')
 
-
-cat <<EOF > $CONFIG
+mkdir cw
+cat <<EOF > cw/$CONFIG
 {
   "idleTimeout": "7200s",
   "host": {
@@ -32,5 +32,7 @@ EOF
 
 curl -H "Authorization: Bearer $(gcloud auth print-access-token)" \
      -H "Content-Type: application/json" \
-     -d @${CONFIG} \
+     -d @cw/${CONFIG} \
 https://workstations.googleapis.com/v1beta/projects/${PROJECT_ID}/locations/$REGION/workstationClusters/${WS_CLUSTER}/workstationConfigs?workstation_config_id=${NAME}
+
+rm -rf cw
