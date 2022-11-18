@@ -19,6 +19,7 @@ export VPC_CONNECTOR=quoteconnector
 export IMAGE=gcr.io/$PROJECT_ID/codeoss-java:latest
 export CONFIG=codeoss-java-config.json
 export NAME=codeoss-java
+export WS_CLUSTER=my-cluster
 
 gcloud services enable \
   cloudresourcemanager.googleapis.com \
@@ -44,7 +45,7 @@ EOF
 curl -H "Authorization: Bearer $(gcloud auth print-access-token)" \
  -H "Content-Type: application/json" \
  -d @cw/cluster.json \
-"https://workstations.googleapis.com/v1beta/projects/$PROJECT_ID/locations/$REGION/workstationClusters?workstation_cluster_id=my-cluster"
+"https://workstations.googleapis.com/v1beta/projects/$PROJECT_ID/locations/$REGION/workstationClusters?workstation_cluster_id=${WS_CLUSTER}"
 
 ## Create GKE Cluster
 gcloud container --project "$PROJECT_ID" clusters create "quote-cluster" \
@@ -186,13 +187,13 @@ kubectl create secret generic gke-cloud-sql-secrets \
 export RECONCILING="true"
 export RECONCILING=$(curl -H "Authorization: Bearer $(gcloud auth print-access-token)" \
         -H "Content-Type: application/json" \
-        "https://workstations.googleapis.com/v1beta/projects/$PROJECT_ID/locations/$REGION/workstationClusters/my-cluster" | jq -r '.reconciling')
+        "https://workstations.googleapis.com/v1beta/projects/$PROJECT_ID/locations/$REGION/workstationClusters/${WS_CLUSTER}" | jq -r '.reconciling')
 while [ $RECONCILING == "true" ]
     do
         sleep 1m
         export RECONCILING=$(curl -H "Authorization: Bearer $(gcloud auth print-access-token)" \
         -H "Content-Type: application/json" \
-        "https://workstations.googleapis.com/v1beta/projects/$PROJECT_ID/locations/$REGION/workstationClusters/my-cluster" | jq -r '.reconciling')
+        "https://workstations.googleapis.com/v1beta/projects/$PROJECT_ID/locations/$REGION/workstationClusters/${WS_CLUSTER}" | jq -r '.reconciling')
     done
 
 # create code-oss config file
@@ -223,6 +224,12 @@ EOF
 curl -H "Authorization: Bearer $(gcloud auth print-access-token)" \
      -H "Content-Type: application/json" \
      -d @cw/${CONFIG} \
-https://workstations.googleapis.com/v1beta/projects/${PROJECT_ID}/locations/$REGION/workstationClusters/my-cluster/workstationConfigs?workstation_config_id=${NAME}
+https://workstations.googleapis.com/v1beta/projects/${PROJECT_ID}/locations/$REGION/workstationClusters/${WS_CLUSTER}/workstationConfigs?workstation_config_id=${NAME}
+
+# create workstation
+curl -H "Authorization: Bearer $(gcloud auth print-access-token)" \
+     -H "Content-Type: application/json" \
+     -d '{"name":"my-workstation", "displayName":"my-workstation"}' \
+-X POST https://workstations.googleapis.com/v1beta/projects/$PROJECT_ID/locations/${REGION}/workstationClusters/${CLUSTER}/workstationConfigs/${NAME}/workstations?workstationId=my-workstation
 
 rm -rf cw
