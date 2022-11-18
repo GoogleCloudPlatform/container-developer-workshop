@@ -1,4 +1,3 @@
-gcloud config set project $GOOGLE_CLOUD_PROJECT
 export NAME=codeoss-java
 export WS_CLUSTER=my-cluster
 export CONFIG=codeoss-java-config.json
