@@ -196,40 +196,4 @@ while [ $RECONCILING == "true" ]
         "https://workstations.googleapis.com/v1beta/projects/$PROJECT_ID/locations/$REGION/workstationClusters/${WS_CLUSTER}" | jq -r '.reconciling')
     done
 
-# create code-oss config file
-cat <<EOF > cw/$CONFIG
-{
-  "idleTimeout": "7200s",
-  "host": {
-    "gce_instance": {
-      "machine_type": "e2-standard-8",
-      "pool_size": 1,
-      "service_account": "$PROJECT_NUMBER-compute@developer.gserviceaccount.com",
-    },
-  },
-  "persistentDirectories": {
-    "mountPath": "/home",
-    "gcePd": {
-      "sizeGb": 200,
-      "fsType": "ext4"
-    }
-  },
-  "container": {
-          "image" : "gcr.io/$PROJECT_ID/codeoss-java:latest"
-  }
-}
-EOF
-
-# add workstation configuration
-curl -H "Authorization: Bearer $(gcloud auth print-access-token)" \
-     -H "Content-Type: application/json" \
-     -d @cw/${CONFIG} \
-https://workstations.googleapis.com/v1beta/projects/${PROJECT_ID}/locations/$REGION/workstationClusters/${WS_CLUSTER}/workstationConfigs?workstation_config_id=${NAME}
-
-# create workstation
-curl -H "Authorization: Bearer $(gcloud auth print-access-token)" \
-     -H "Content-Type: application/json" \
-     -d '{"name":"my-workstation", "displayName":"my-workstation"}' \
--X POST https://workstations.googleapis.com/v1beta/projects/$PROJECT_ID/locations/${REGION}/workstationClusters/${WS_CLUSTER}/workstationConfigs/${NAME}/workstations?workstationId=my-workstation
-
 rm -rf cw
