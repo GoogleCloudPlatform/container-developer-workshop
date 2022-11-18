@@ -230,6 +230,6 @@ https://workstations.googleapis.com/v1beta/projects/${PROJECT_ID}/locations/$REG
 curl -H "Authorization: Bearer $(gcloud auth print-access-token)" \
      -H "Content-Type: application/json" \
      -d '{"name":"my-workstation", "displayName":"my-workstation"}' \
--X POST https://workstations.googleapis.com/v1beta/projects/$PROJECT_ID/locations/${REGION}/workstationClusters/${CLUSTER}/workstationConfigs/${NAME}/workstations?workstationId=my-workstation
+-X POST https://workstations.googleapis.com/v1beta/projects/$PROJECT_ID/locations/${REGION}/workstationClusters/${WS_CLUSTER}/workstationConfigs/${NAME}/workstations?workstationId=my-workstation
 
 rm -rf cw
