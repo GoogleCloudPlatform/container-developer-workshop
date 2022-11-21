@@ -2,7 +2,6 @@
 export PROJECT_ID=$(gcloud config get-value project)
 export PROJECT_NUMBER=$(gcloud projects describe $PROJECT_ID --format='value(projectNumber)')
 
-
 export DB_INSTANCE_NAME=mytest-instance
 export DB_INSTANCE_PASSWORD=CHANGEME
 export DB_NAME=item_db
@@ -10,8 +9,6 @@ export DB_USER=test-user
 export DB_PASSWORD=CHANGEME
 
 export USE_GKE_GCLOUD_AUTH_PLUGIN=True
-
-
 
 gcloud services enable \
   cloudresourcemanager.googleapis.com \

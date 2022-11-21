@@ -10,7 +10,6 @@ export WS_CLUSTER=my-cluster
 export CONFIG=codeoss-js-config.json
 export IMAGE=gcr.io/$PROJECT_ID/codeoss-js:latest
 
-
 cat <<EOF > cw/$CONFIG
 {
   "idleTimeout": "7200s",
