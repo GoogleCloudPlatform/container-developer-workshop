@@ -11,7 +11,7 @@ export CONFIG=codeoss-js-config.json
 export IMAGE=gcr.io/$PROJECT_ID/codeoss-js:latest
 
 
-cat <<EOF > $CONFIG
+cat <<EOF > cw/$CONFIG
 {
   "idleTimeout": "7200s",
   "host": {
@@ -36,6 +36,7 @@ EOF
 
 curl -H "Authorization: Bearer $(gcloud auth print-access-token)" \
      -H "Content-Type: application/json" \
-     -d @${CONFIG} \
+     -d @cw/${CONFIG} \
 https://workstations.googleapis.com/v1beta/projects/${PROJECT_ID}/locations/$REGION/workstationClusters/${WS_CLUSTER}/workstationConfigs?workstation_config_id=${NAME}
+
 rm -rf cw
