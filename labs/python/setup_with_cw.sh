@@ -47,8 +47,6 @@ gcloud spanner instances create $SPANNER_INSTANCE \
     --description="Music Catalog" \
     --processing-units=100
 
-gcloud alpha spanner instances update $SPANNER_INSTANCE --processing-units=100
-
 export SPANNER_CONNECTION_STRING=projects/$PROJECT_ID/instances/$SPANNER_INSTANCE/databases/$SPANNER_DB
 
 gcloud spanner databases create $SPANNER_DB --instance=$SPANNER_INSTANCE --ddl='CREATE TABLE Singers (
