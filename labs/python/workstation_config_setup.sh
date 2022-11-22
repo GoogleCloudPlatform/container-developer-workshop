@@ -37,3 +37,4 @@ curl -H "Authorization: Bearer $(gcloud auth print-access-token)" \
 https://workstations.googleapis.com/v1beta/projects/${PROJECT_ID}/locations/$REGION/workstationClusters/${WS_CLUSTER}/workstationConfigs?workstation_config_id=${NAME}
 
 rm -rf cw
+

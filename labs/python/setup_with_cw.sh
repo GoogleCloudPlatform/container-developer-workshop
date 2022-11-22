@@ -39,7 +39,6 @@ gcloud container clusters create python-cluster \
 --zone us-central1-a \
 --workload-pool ${PROJECT_ID}.svc.id.goog --async
 
-
 ## SPANNER
 export SPANNER_INSTANCE=music-catalog 
 export SPANNER_DB=musicians REGION=us-east1
