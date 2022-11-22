@@ -5,8 +5,8 @@ export REGION=us-central1
 export USE_GKE_GCLOUD_AUTH_PLUGIN=True
 
 export IMAGE=gcr.io/$PROJECT_ID/codeoss-python:latest
-export CONFIG=codeoss-config.json
-export NAME=codeoss
+export CONFIG=codeoss-python-config.json
+export NAME=codeoss-python
 export WS_CLUSTER=my-cluster
 
 gcloud services enable \

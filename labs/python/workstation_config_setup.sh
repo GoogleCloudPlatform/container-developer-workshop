@@ -3,10 +3,10 @@ mkdir cw
 export REGION=us-central1
 export PROJECT_ID=$(gcloud config get-value project)
 export PROJECT_NUMBER=$(gcloud projects describe $PROJECT_ID --format='value(projectNumber)')
-export WS_CLUSTER=my-cluster
 export IMAGE=gcr.io/$PROJECT_ID/codeoss-python:latest
-export CONFIG=codeoss-config.json
-export NAME=codeoss
+export CONFIG=codeoss-python-config.json
+export NAME=codeoss-python
+export WS_CLUSTER=my-cluster
 
 cat <<EOF > cw/$CONFIG
 {
