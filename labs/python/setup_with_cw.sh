@@ -4,7 +4,7 @@ export REGION=us-central1
 
 export USE_GKE_GCLOUD_AUTH_PLUGIN=True
 
-export IMAGE=gcr.io/$PROJECT_ID/codeoss-python2:latest
+export IMAGE=gcr.io/$PROJECT_ID/codeoss-python:latest
 export CONFIG=codeoss-config.json
 export NAME=codeoss
 export WS_CLUSTER=my-cluster
