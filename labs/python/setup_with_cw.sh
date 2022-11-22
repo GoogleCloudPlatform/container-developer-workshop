@@ -5,8 +5,8 @@ export REGION=us-central1
 export USE_GKE_GCLOUD_AUTH_PLUGIN=True
 
 export IMAGE=gcr.io/$PROJECT_ID/codeoss-python:latest
-export CONFIG=codeoss-config.json
-export NAME=codeoss
+export CONFIG=codeoss-python-config.json
+export NAME=codeoss-python
 export WS_CLUSTER=my-cluster
 
 gcloud services enable \
@@ -61,16 +61,12 @@ FROM us-central1-docker.pkg.dev/cloud-workstations-images/predefined/code-oss:la
 RUN sudo apt update
 RUN sudo apt install -y gettext-base jq httpie
 #Python Debugger extension
-RUN sudo apt-get install -y wget gpg
-RUN wget -qO- https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > packages.microsoft.gpg
-RUN sudo install -D -o root -g root -m 644 packages.microsoft.gpg /etc/apt/keyrings/packages.microsoft.gpg
-RUN sudo sh -c 'echo "deb [arch=amd64,arm64,armhf signed-by=/etc/apt/keyrings/packages.microsoft.gpg] https://packages.microsoft.com/repos/code stable main" > /etc/apt/sources.list.d/vscode.list'
-RUN rm -f packages.microsoft.gpg
-RUN sudo apt install -y apt-transport-https
-RUN sudo apt update
-RUN sudo apt install -y code
-RUN code --user-data-dir="~/.vscode-root" --install-extension ms-python.python
+RUN wget https://open-vsx.org/api/ms-python/python/2022.18.2/file/ms-python.python-2022.18.2.vsix && \
+unzip ms-python.python-2022.18.2.vsix "extension/*" &&\
+mv extension /opt/code-oss/extensions/python-debugger
 EOF
+
+
 
 #build custom image
 gcloud auth configure-docker
