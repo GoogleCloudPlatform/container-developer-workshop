@@ -4,7 +4,7 @@ export REGION=us-central1
 export PROJECT_ID=$(gcloud config get-value project)
 export PROJECT_NUMBER=$(gcloud projects describe $PROJECT_ID --format='value(projectNumber)')
 export WS_CLUSTER=my-cluster
-export IMAGE=us-central1-docker.pkg.dev/cloud-workstations-images/predefined/code-oss:latest
+export IMAGE=gcr.io/$PROJECT_ID/codeoss-python:latest
 export CONFIG=codeoss-config.json
 export NAME=codeoss
 
