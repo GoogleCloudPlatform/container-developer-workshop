@@ -4,8 +4,7 @@ export REGION=us-central1
 
 export USE_GKE_GCLOUD_AUTH_PLUGIN=True
 
-#export IMAGE=gcr.io/$PROJECT_ID/codeoss-java:latest
-export IMAGE=us-central1-docker.pkg.dev/cloud-workstations-images/predefined/code-oss:latest
+export IMAGE=gcr.io/$PROJECT_ID/codeoss-python:latest
 export CONFIG=codeoss-config.json
 export NAME=codeoss
 export WS_CLUSTER=my-cluster
@@ -39,16 +38,13 @@ gcloud container clusters create python-cluster \
 --zone us-central1-a \
 --workload-pool ${PROJECT_ID}.svc.id.goog --async
 
-
 ## SPANNER
 export SPANNER_INSTANCE=music-catalog 
 export SPANNER_DB=musicians REGION=us-east1
 gcloud spanner instances create $SPANNER_INSTANCE \
     --config=regional-${REGION} \
     --description="Music Catalog" \
-    --nodes=1
-
-gcloud alpha spanner instances update $SPANNER_INSTANCE --processing-units=100
+    --processing-units=100
 
 export SPANNER_CONNECTION_STRING=projects/$PROJECT_ID/instances/$SPANNER_INSTANCE/databases/$SPANNER_DB
 
@@ -59,6 +55,29 @@ gcloud spanner databases create $SPANNER_DB --instance=$SPANNER_INSTANCE --ddl='
             SingerInfo   BYTES(MAX)
         ) PRIMARY KEY (SingerId)'
 
+#Dockerfile for custom cloud workstation image
+cat <<EOF > cw/Dockerfile
+FROM us-central1-docker.pkg.dev/cloud-workstations-images/predefined/code-oss:latest
+RUN sudo apt update
+RUN sudo apt install -y gettext-base jq httpie
+#Python Debugger extension
+RUN sudo apt-get install -y wget gpg
+RUN wget -qO- https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > packages.microsoft.gpg
+RUN sudo install -D -o root -g root -m 644 packages.microsoft.gpg /etc/apt/keyrings/packages.microsoft.gpg
+RUN sudo sh -c 'echo "deb [arch=amd64,arm64,armhf signed-by=/etc/apt/keyrings/packages.microsoft.gpg] https://packages.microsoft.com/repos/code stable main" > /etc/apt/sources.list.d/vscode.list'
+RUN rm -f packages.microsoft.gpg
+RUN sudo apt install -y apt-transport-https
+RUN sudo apt update
+RUN sudo apt install -y code
+RUN code --user-data-dir="~/.vscode-root" --install-extension ms-python.python
+EOF
+
+#build custom image
+gcloud auth configure-docker
+docker build cw -t $IMAGE
+
+#push image to gcr
+docker push $IMAGE
 
 echo "Checking GKE clustering readiness"
 while [ $(gcloud container clusters list --filter="name=python-cluster" --format="value(status)") == "PROVISIONING" ]

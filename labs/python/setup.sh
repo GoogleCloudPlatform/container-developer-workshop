@@ -12,7 +12,6 @@ gcloud services enable \
     spanner.googleapis.com 
 
 
-
 ## CLUSTER
 
 gcloud container clusters create python-cluster \
