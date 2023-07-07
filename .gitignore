@@ -27,3 +27,5 @@ target/
 
 .DS_Store
 .idea/
+
+maven-wrapper.jar
